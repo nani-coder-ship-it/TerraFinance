@@ -86,6 +86,14 @@ const VIEWS = {
             </div>
           </div>
           
+          <!-- Categorical Breakdown -->
+          <div class="card searchable-item">
+            <h3 style="font-family: var(--font-headline); margin-bottom: 20px;">📊 Spending by Category</h3>
+            <div id="category-breakdown" style="display: flex; flex-direction: column; gap: 14px;">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+          
           <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px;">
              <!-- Spending Alerts -->
              <div class="card searchable-item" style="background-color: #ffdce0; border: none; color: #b83230;">
@@ -142,15 +150,25 @@ const VIEWS = {
         </div>
       </div>
     `,
-    init: () => {}
+    init: () => {
+      renderCategoryBreakdown();
+    }
   },
   transactions: {
     title: 'Transactions History',
     content: `
-      <div class="filter-bar" style="display: flex; gap: 12px; margin-bottom: 24px;">
-        <button class="btn filter-btn active" data-filter="all" style="padding: 6px 12px; font-size: 0.75rem;">All</button>
-        <button class="btn filter-btn" data-filter="income" style="padding: 6px 12px; font-size: 0.75rem; background: var(--surface-container);">Income</button>
-        <button class="btn filter-btn" data-filter="expense" style="padding: 6px 12px; font-size: 0.75rem; background: var(--surface-container);">Expenses</button>
+      <div class="filter-bar" style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+        <div style="display: flex; gap: 8px;">
+          <button class="btn filter-btn active" data-filter="all" style="padding: 6px 12px; font-size: 0.75rem;">All</button>
+          <button class="btn filter-btn" data-filter="income" style="padding: 6px 12px; font-size: 0.75rem; background: var(--surface-container);">Income</button>
+          <button class="btn filter-btn" data-filter="expense" style="padding: 6px 12px; font-size: 0.75rem; background: var(--surface-container);">Expenses</button>
+        </div>
+        <div style="display: flex; gap: 8px; margin-left: auto;">
+          <button class="btn sort-btn active" data-sort="date-desc" style="padding: 6px 12px; font-size: 0.75rem; background: var(--surface-container);">📅 New→Old</button>
+          <button class="btn sort-btn" data-sort="date-asc" style="padding: 6px 12px; font-size: 0.75rem; background: var(--surface-container);">📅 Old→New</button>
+          <button class="btn sort-btn" data-sort="amount-desc" style="padding: 6px 12px; font-size: 0.75rem; background: var(--surface-container);">💰 High→Low</button>
+          <button class="btn sort-btn" data-sort="amount-asc" style="padding: 6px 12px; font-size: 0.75rem; background: var(--surface-container);">💰 Low→High</button>
+        </div>
       </div>
       <div class="card searchable-container" style="padding: 0; overflow: hidden;">
           <table style="width: 100%; border-collapse: collapse;">
@@ -168,18 +186,27 @@ const VIEWS = {
       </div>
     `,
     init: () => {
-      renderTransactions('all');
+      renderTransactions('all', 'date-desc');
       
       const filterBar = document.querySelector('.filter-bar');
       if (filterBar) {
         filterBar.addEventListener('click', (e) => {
-          const btn = e.target.closest('.filter-btn');
-          if (!btn) return;
+          const filterBtn = e.target.closest('.filter-btn');
+          const sortBtn = e.target.closest('.sort-btn');
           
-          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
+          if (filterBtn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            filterBtn.classList.add('active');
+            const currentSort = document.querySelector('.sort-btn.active')?.getAttribute('data-sort') || 'date-desc';
+            renderTransactions(filterBtn.getAttribute('data-filter'), currentSort);
+          }
           
-          renderTransactions(btn.getAttribute('data-filter'));
+          if (sortBtn) {
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            sortBtn.classList.add('active');
+            const currentFilter = document.querySelector('.filter-btn.active')?.getAttribute('data-filter') || 'all';
+            renderTransactions(currentFilter, sortBtn.getAttribute('data-sort'));
+          }
         });
       }
     }
@@ -230,6 +257,8 @@ const VIEWS = {
 // State
 let currentTheme = localStorage.getItem('theme') || 'light';
 let currentView = 'insights';
+let userRole = localStorage.getItem('userRole') || 'viewer'; // 'viewer', 'editor', 'admin'
+let userRoles = ['viewer', 'editor', 'admin']; // Available roles
 
 // DOM Elements
 const viewContainer = document.getElementById('view-container');
@@ -242,17 +271,29 @@ const notificationDropdown = document.getElementById('notification-dropdown');
 const adminBtn = document.getElementById('admin-view-btn');
 const adminModal = document.getElementById('admin-modal');
 const closeModalBtn = document.getElementById('close-modal-btn');
+const closeModalIcon = document.getElementById('close-modal-icon');
 const unreadDot = document.getElementById('unread-dot');
 const universalSearch = document.getElementById('universal-search');
 
 // Functions
-function renderTransactions(filter = 'all') {
+function renderTransactions(filter = 'all', sort = 'date-desc') {
   const tbody = document.getElementById('transaction-rows');
   if (!tbody) return;
   
-  const filteredData = filter === 'all' 
-    ? TRANSACTIONS_DATA 
-    : TRANSACTIONS_DATA.filter(tx => tx.type === filter);
+  let filteredData = filter === 'all' 
+    ? [...TRANSACTIONS_DATA]
+    : [...TRANSACTIONS_DATA].filter(tx => tx.type === filter);
+    
+  // Sorting logic
+  if (sort === 'date-asc') {
+    filteredData.sort((a, b) => new Date(a.date) - new Date(b.date));
+  } else if (sort === 'date-desc') {
+    filteredData.sort((a, b) => new Date(b.date) - new Date(a.date));
+  } else if (sort === 'amount-asc') {
+    filteredData.sort((a, b) => a.amount - b.amount);
+  } else if (sort === 'amount-desc') {
+    filteredData.sort((a, b) => b.amount - a.amount);
+  }
     
   tbody.innerHTML = filteredData.map(tx => `
     <tr class="searchable-item" style="border-bottom: 1px solid var(--outline-variant);">
@@ -267,6 +308,86 @@ function renderTransactions(filter = 'all') {
   `).join('');
   
   lucide.createIcons();
+}
+
+function getCategoryBreakdown() {
+  const categoryData = {};
+  TRANSACTIONS_DATA.filter(tx => tx.type === 'expense').forEach(tx => {
+    if (!categoryData[tx.category]) {
+      categoryData[tx.category] = 0;
+    }
+    categoryData[tx.category] += Math.abs(tx.amount);
+  });
+  return Object.entries(categoryData).sort((a, b) => b[1] - a[1]);
+}
+
+function renderCategoryBreakdown() {
+  const container = document.getElementById('category-breakdown');
+  if (!container) return;
+  
+  const categories = getCategoryBreakdown();
+  const total = categories.reduce((sum, [_, amount]) => sum + amount, 0);
+  
+  container.innerHTML = categories.map(([category, amount]) => {
+    const percentage = ((amount / total) * 100).toFixed(1);
+    return `
+      <div class="searchable-item" style="padding: 12px; background: var(--surface-container-low); border-radius: var(--radius-m);">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="font-weight: 600;">${category}</span>
+          <span style="font-weight: 700; color: var(--primary);">₹${amount.toLocaleString()}</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <div style="flex-grow: 1; height: 6px; background: var(--surface-container); border-radius: 3px; overflow: hidden;">
+            <div style="height: 100%; width: ${percentage}%; background: linear-gradient(90deg, var(--primary), var(--primary-container));"></div>
+          </div>
+          <span style="font-size: 0.75rem; color: var(--on-surface-variant); min-width: 35px; text-align: right;">${percentage}%</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderAdminPanel() {
+  const adminFeatures = document.querySelectorAll('[data-admin-feature]');
+  
+  // Show/hide features based on role
+  adminFeatures.forEach(feature => {
+    const requiredRole = feature.getAttribute('data-admin-feature');
+    const featureRoleIndex = userRoles.indexOf(requiredRole);
+    const userRoleIndex = userRoles.indexOf(userRole);
+    
+    // Show if user role is equal to or higher than required role
+    if (userRoleIndex >= featureRoleIndex) {
+      feature.style.display = 'block';
+    } else {
+      feature.style.display = 'none';
+    }
+  });
+  
+  // Update admin status badge
+  const roleDisplay = document.querySelector('[id="admin-role-display"]');
+  if (roleDisplay) {
+    const roleEmojis = { viewer: '👁️', editor: '✏️', admin: '🛡️' };
+    roleDisplay.innerHTML = `
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+        ${userRoles.map(role => `
+          <button onclick="switchUserRole('${role}')" style="
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            border: 2px solid ${userRole === role ? 'var(--primary)' : 'var(--outline-variant)'};
+            background: ${userRole === role ? 'var(--on-primary-container)' : 'var(--surface-container)'};
+            color: ${userRole === role ? 'var(--primary)' : 'var(--on-surface)'};
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+          ">
+            ${roleEmojis[role]} ${role.charAt(0).toUpperCase() + role.slice(1)}
+          </button>
+        `).join('')}
+      </div>
+    `;
+  }
 }
 
 function handleSearch(query) {
@@ -351,6 +472,7 @@ document.addEventListener('click', () => {
 
 adminBtn.addEventListener('click', () => {
   adminModal.classList.add('active');
+  renderAdminPanel();
   lucide.createIcons();
 });
 
@@ -358,8 +480,23 @@ closeModalBtn.addEventListener('click', () => {
   adminModal.classList.remove('active');
 });
 
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#close-modal-icon')) {
+    adminModal.classList.remove('active');
+  }
+});
+
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
   setTheme(currentTheme);
   setView(currentView);
 });
+
+// Global role switcher function
+window.switchUserRole = function(newRole) {
+  if (userRoles.includes(newRole)) {
+    userRole = newRole;
+    localStorage.setItem('userRole', newRole);
+    renderAdminPanel();
+  }
+};
