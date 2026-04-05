@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TerraFinance — Premium Fintech Dashboard</title>
+    <!-- Fonts included via style.css -->
+    <link rel="stylesheet" href="/style.css" />
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="logo-section">
+          <h2 style="font-size: 1.25rem; letter-spacing: -0.5px;">
+            <span style="color: var(--primary);">Terra</span> Finance
+          </h2>
+          <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; color: var(--on-surface-variant);">Enterprise</span>
+        </div>
+
+        <ul class="nav-menu">
+          <li class="nav-item" data-view="overview">
+            <i data-lucide="layout-dashboard"></i>
+            Dashboard
+          </li>
+          <li class="nav-item" data-view="transactions">
+            <i data-lucide="arrow-right-left"></i>
+            Transactions
+          </li>
+          <li class="nav-item active" data-view="insights">
+            <i data-lucide="line-chart"></i>
+            Insights
+          </li>
+          <li class="nav-item" data-view="settings">
+            <i data-lucide="settings"></i>
+            Settings
+          </li>
+        </ul>
+
+        <div style="flex-grow: 1;"></div>
+
+        <!-- Help Section -->
+        <div class="nav-item" data-view="help" style="margin-top: auto; border: 1px dashed var(--outline-variant);">
+          <i data-lucide="help-circle"></i>
+          Help & Support
+        </div>
+
+        <!-- User Profile -->
+        <div class="user-profile" style="display: flex; align-items: center; gap: 12px; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--outline-variant);">
+          <img src="https://i.pravatar.cc/100?u=alex" alt="Alex Sterling" style="width: 40px; height: 40px; border-radius: 50%;" />
+          <div style="display: flex; flex-direction: column;">
+            <span style="font-weight: 700; font-size: 0.9rem;">Alex Sterling</span>
+            <span style="font-size: 0.75rem; color: var(--on-surface-variant);">Gold Member</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <header class="top-bar">
+          <h1 id="view-title" class="fade-in">Financial Insights</h1>
+          
+          <div style="display: flex; gap: 24px; align-items: center;">
+            <div style="position: relative;">
+               <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; color: var(--on-surface-variant);"></i>
+               <input type="text" id="universal-search" placeholder="Search insights..." 
+                 style="background: var(--surface-container-high); border: none; padding: 8px 16px 8px 40px; border-radius: var(--radius-m); outline: none; width: 220px;" />
+            </div>
+            
+            <div class="theme-toggle" id="theme-toggle">
+              <i data-lucide="moon" id="theme-icon"></i>
+            </div>
+            
+            <div style="position: relative; cursor: pointer;" id="notification-bell">
+              <i data-lucide="bell" style="color: var(--on-surface-variant);"></i>
+              <span id="unread-dot" style="position: absolute; top: -5px; right: -5px; background: var(--error); width: 8px; height: 8px; border-radius: 50%;"></span>
+              
+              <!-- Notification Dropdown -->
+              <div class="notification-dropdown" id="notification-dropdown">
+                <div class="notification-header">
+                  Notifications
+                  <span style="font-size: 0.7rem; color: var(--primary); font-weight: 700; cursor: pointer;">Mark all Read</span>
+                </div>
+                <div class="notification-item">
+                  <div style="font-weight: 700; font-size: 0.85rem;">Savings Goal Met!</div>
+                  <div style="font-size: 0.75rem; color: var(--on-surface-variant); margin-top: 4px;">You've reached your April goal of ₹10,000.</div>
+                </div>
+                <div class="notification-item">
+                  <div style="font-weight: 700; font-size: 0.85rem;">New Login Detected</div>
+                  <div style="font-size: 0.75rem; color: var(--on-surface-variant); margin-top: 4px;">A new login was recorded from Pune, India.</div>
+                </div>
+              </div>
+            </div>
+            
+            <button class="btn btn-primary" id="admin-view-btn" style="padding: 8px 16px; font-size: 0.8rem;">Admin View</button>
+          </div>
+        </header>
+
+        <div id="view-container" class="fade-in">
+          <!-- Views will be injected here -->
+        </div>
+      </main>
+    </div>
+
+    <!-- Admin Modal Overlay -->
+    <div class="modal-overlay" id="admin-modal">
+      <div class="modal-content">
+        <i data-lucide="shield-check" style="width: 48px; height: 48px; color: var(--primary); margin-bottom: 24px;"></i>
+        <h2 style="margin-bottom: 16px;">Admin Access Level</h2>
+        <p style="color: var(--on-surface-variant); margin-bottom: 32px;">You are currently viewing the system with elevated permissions. Some financial controls are now unlocked.</p>
+        <button class="btn btn-primary" id="close-modal-btn">Continue to Dashboard</button>
+      </div>
+    </div>
+
+    <script type="module" src="/main.js"></script>
+    <script>
+      // Initialize icons
+      setTimeout(() => {
+        lucide.createIcons();
+      }, 100);
+    </script>
+  </body>
+</html>
